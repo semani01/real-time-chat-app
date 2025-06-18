@@ -11,7 +11,7 @@
 # Dependencies
 node_modules/
 
-# Environment variables
+# Environment files
 .env
 
 # Logs
