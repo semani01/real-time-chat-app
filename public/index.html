@@ -8,13 +8,15 @@
         #messages { list-style: none; padding: 0; max-height: 300px; overflow-y: scroll; }
         #messages li { padding: 5px 0; }
         #form { margin-top: 1rem; }
+        .timestamp { color: #888; font-size: 0.8em; margin-left: 0.5em; }
     </style>
 </head>
 <body>
 <h1>Real-Time Chat</h1>
 <ul id="messages"></ul>
 <form id="form">
-    <input id="input" autocomplete="off" placeholder="Type a message..." /><button>Send</button>
+    <input id="input" autocomplete="off" placeholder="Type a message..." />
+    <button>Send</button>
 </form>
 
 <!-- Socket.IO client -->
@@ -26,15 +28,40 @@
     const input = document.getElementById('input');
     const messages = document.getElementById('messages');
 
-    // Receive chat messages
+    // 1) Render chat history when connecting
+    socket.on('chat history', history => {
+        history.forEach(({ id, text, timestamp }) => {
+            const item = document.createElement('li');
+            const time = new Date(timestamp).toLocaleTimeString();
+            item.textContent = `${id.slice(0,4)}: ${text}`;
+            const span = document.createElement('span');
+            span.className = 'timestamp';
+            span.textContent = `(${time})`;
+            item.appendChild(span);
+            messages.appendChild(item);
+        });
+        // Scroll to bottom after loading history
+        window.scrollTo(0, document.body.scrollHeight);
+    });
+
+    // 2) Receive new chat messages
     socket.on('chat message', data => {
         const item = document.createElement('li');
+        const time = data.timestamp
+            ? new Date(data.timestamp).toLocaleTimeString()
+            : '';
         item.textContent = `${data.id.slice(0,4)}: ${data.text}`;
+        if (time) {
+            const span = document.createElement('span');
+            span.className = 'timestamp';
+            span.textContent = `(${time})`;
+            item.appendChild(span);
+        }
         messages.appendChild(item);
         window.scrollTo(0, document.body.scrollHeight);
     });
 
-    // Send chat messages
+    // 3) Send chat messages
     form.addEventListener('submit', e => {
         e.preventDefault();
         if (input.value) {
